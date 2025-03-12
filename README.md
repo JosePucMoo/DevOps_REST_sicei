@@ -9,4 +9,16 @@
 
     ````
     npm run dev
-    ````# DevOps_REST_sicei
+
+## Construir la imagen y ejecutar el contenedor
+
+1. Contruir imagen
+    ````
+    docker build -t sicei .
+    ````
+
+2. Ejecutar contenedor
+    ````
+    docker run -p 3000:3000 sicei
+    ````
+
