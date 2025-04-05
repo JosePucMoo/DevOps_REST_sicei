@@ -29,19 +29,9 @@ pipeline {
             steps {
                 echo '🚀 Desplegando la aplicación...'
                 sh '''
-                    EXISTING_CONTAINER=$(docker ps -q -f name=$APP_NAME)
-
-                    if [ -n "$EXISTING_CONTAINER" ]; then
-                        echo "Deteniendo contenedor existente..."
-                        docker stop $APP_NAME
-                        echo "Eliminando contenedor existente..."
-                        docker rm -f $APP_NAME
-                    fi
-
-                    EXISTING_CONTAINER=$(docker ps -aq -f name=$APP_NAME)
-                    if [ -n "$EXISTING_CONTAINER" ]; then
-                        echo "❌ Error: El contenedor anterior no se eliminó correctamente."
-                        exit 1
+                    if [ "$(docker ps -aq -f name=$APP_NAME)" ]; then
+                        docker stop $APP_NAME || true
+                        docker rm -f $APP_NAME || true
                     fi
 
                     echo "🚢 Ejecutando nuevo contenedor..."
@@ -50,5 +40,6 @@ pipeline {
                 echo "✅ Despliegue exitoso."
             }
         }
+
     }
 }
