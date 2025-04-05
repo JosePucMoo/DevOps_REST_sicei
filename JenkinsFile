@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = 'sicei'
+        NEW_APP_NAME = "${APP_NAME}:${BUILD_ID}"
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                echo '🔧 Verificando si Docker está corriendo...'
+                sh '''
+                    if ! pgrep -x "dockerd" > /dev/null; then
+                      echo "🚀 Docker no está corriendo. Iniciando Docker..."
+                      open -a Docker  # Para macOS
+                      sleep 10
+                    fi
+                '''
+
+                echo '🐳 Construyendo la imagen Docker...'
+                sh '''
+                    docker build -t $NEW_APP_NAME .
+                '''
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo '🚀 Desplegando la aplicación...'
+                sh '''
+                    EXISTING_CONTAINER=$(docker ps -q -f name=$APP_NAME)
+
+                    if [ -n "$EXISTING_CONTAINER" ]; then
+                        echo "Deteniendo contenedor existente..."
+                        docker stop $APP_NAME
+                        echo "Eliminando contenedor existente..."
+                        docker rm -f $APP_NAME
+                    fi
+
+                    EXISTING_CONTAINER=$(docker ps -aq -f name=$APP_NAME)
+                    if [ -n "$EXISTING_CONTAINER" ]; then
+                        echo "❌ Error: El contenedor anterior no se eliminó correctamente."
+                        exit 1
+                    fi
+
+                    echo "🚢 Ejecutando nuevo contenedor..."
+                    docker run -d -p 3000:3000 --name "$APP_NAME" "$NEW_APP_NAME"
+                '''
+                echo "✅ Despliegue exitoso."
+            }
+        }
+    }
+}
